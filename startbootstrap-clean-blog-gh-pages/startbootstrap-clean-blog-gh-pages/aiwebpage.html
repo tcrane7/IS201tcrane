@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkers</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #dfe7f2, #eef2f7);
+      color: #1e2430;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 90px 24px 24px;
+    }
+
+    .page-nav {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      min-width: 150px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 14px 35px rgba(22, 34, 51, 0.14);
+    }
+
+    .page-nav a {
+      display: block;
+      text-decoration: none;
+      color: #243447;
+      font-size: 0.96rem;
+      font-weight: 700;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.55);
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .page-nav a:hover {
+      background: #ffffff;
+      transform: translateX(3px);
+      box-shadow: 0 6px 14px rgba(31, 47, 70, 0.10);
+    }
+
+    .page-nav a:active {
+      transform: translateX(1px);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #1d2735;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      color: #556070;
+      font-size: 0.98rem;
+      text-align: center;
+    }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 10px 30px rgba(22, 34, 51, 0.08);
+      border-radius: 18px;
+      padding: 14px 18px;
+    }
+
+    label {
+      font-weight: 600;
+      color: #2b3645;
+    }
+
+    select,
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    select {
+      background: #ffffff;
+      color: #1e2430;
+      margin-left: 8px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    button {
+      background: #1f2f46;
+      color: white;
+      box-shadow: 0 8px 18px rgba(31, 47, 70, 0.22);
+    }
+
+    button:hover,
+    select:hover {
+      transform: translateY(-1px);
+    }
+
+    #status {
+      margin: 4px 0 18px;
+      min-height: 28px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #243244;
+      text-align: center;
+    }
+
+    .board-wrap {
+      background: rgba(255, 255, 255, 0.75);
+      padding: 18px;
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(28, 44, 64, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 78px);
+      grid-template-rows: repeat(8, 78px);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 8px solid #5e4533;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15);
+    }
+
+    .cell {
+      width: 78px;
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      user-select: none;
+    }
+
+    .light {
+      background: #f3dfc0;
+    }
+
+    .dark {
+      background: #8b5b39;
+    }
+
+    .piece {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+      box-shadow:
+        inset 0 4px 10px rgba(255,255,255,0.18),
+        inset 0 -10px 14px rgba(0,0,0,0.22),
+        0 7px 12px rgba(0,0,0,0.24);
+    }
+
+    .piece:hover {
+      transform: scale(1.05);
+    }
+
+    .redPiece {
+      background: radial-gradient(circle at 30% 28%, #ffb0b0, #d31616 68%);
+      border: 3px solid #ffd1d1;
+    }
+
+    .blackPiece {
+      background: radial-gradient(circle at 30% 28%, #7a7a7a, #131313 68%);
+      border: 3px solid #b9b9b9;
+    }
+
+    .selected {
+      outline: 4px solid #3db8ff;
+      outline-offset: 2px;
+    }
+
+    .moveHint::after {
+      content: "";
+      width: 18px;
+      height: 18px;
+      background: rgba(52, 211, 153, 0.95);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.25);
+      position: absolute;
+    }
+
+    .captureHint::after {
+      content: "";
+      width: 28px;
+      height: 28px;
+      border: 4px solid #ffd43b;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.18);
+    }
+
+    .kingMark {
+      font-size: 1.5rem;
+      color: #ffd54f;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      font-weight: 800;
+    }
+
+    .note {
+      max-width: 760px;
+      text-align: center;
+      margin-top: 16px;
+      color: #5a6778;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 24, 36, 0.58);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 999;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: min(420px, 92vw);
+      text-align: center;
+      box-shadow: 0 22px 50px rgba(0,0,0,0.22);
+      animation: popIn 0.22s ease;
+    }
+
+    .modal-emoji {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+    }
+
+    .modal h2 {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      color: #1e293b;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: #5a6778;
+      font-size: 1rem;
+    }
+
+    .modal button {
+      background: #1f2f46;
+      color: white;
+    }
+
+    #confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 998;
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 120px 12px 20px;
+      }
+
+      .page-nav {
+        top: 12px;
+        left: 12px;
+        min-width: 130px;
+        padding: 10px;
+      }
+
+      #board {
+        grid-template-columns: repeat(8, 42px);
+        grid-template-rows: repeat(8, 42px);
+      }
+
+      .cell {
+        width: 42px;
+        height: 42px;
+      }
+
+      .piece {
+        width: 31px;
+        height: 31px;
+      }
+
+      .kingMark {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-nav">
+    <a href="index.html">Home</a>
+    <a href="Resume.html">Resume</a>
+    <a href="Intrests.html">Intrests</a>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <h1>Checkers</h1>
+  <div class="subtitle">Classic red vs black checkers with 3 computer difficulty levels.</div>
+
+  <div class="top-bar">
+    <label>
+      Difficulty
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </label>
+
+    <button id="restart">New Game</button>
+  </div>
+
+  <div id="status">Your turn (Red)</div>
+
+  <div class="board-wrap">
+    <div id="board"></div>
+  </div>
+
+  <div class="note">
+    Click one of your red pieces, then click a highlighted square to move. Easy and Medium use forced captures.
+    Hard mode does not force captures.
+  </div>
+
+  <div class="modal" id="resultModal">
+    <div class="modal-card">
+      <div class="modal-emoji" id="modalEmoji">🎉</div>
+      <h2 id="modalTitle">You Win!</h2>
+      <p id="modalText">Nice job — you beat the computer.</p>
+      <button id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const difficultyEl = document.getElementById("difficulty");
+    const restartBtn = document.getElementById("restart");
+
+    const resultModal = document.getElementById("resultModal");
+    const modalEmoji = document.getElementById("modalEmoji");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalText = document.getElementById("modalText");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+
+    const confettiCanvas = document.getElementById("confetti");
+    const ctx = confettiCanvas.getContext("2d");
+
+    let board = [];
+    let selected = null;
+    let currentPlayer = "r";
+    let gameOver = false;
+    let thinking = false;
+    let confettiPieces = [];
+    let confettiRunning = false;
+
+    const dirs = {
+      r: [[-1, -1], [-1, 1]],
+      b: [[1, -1], [1, 1]]
+    };
+
+    function resizeCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+      confettiPieces = [];
+      for (let i = 0; i < 180; i++) {
+        confettiPieces.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * -confettiCanvas.height,
+          w: 8 + Math.random() * 7,
+          h: 10 + Math.random() * 10,
+          vy: 2 + Math.random() * 4,
+          vx: -2 + Math.random() * 4,
+          rot: Math.random() * Math.PI,
+          vr: -0.15 + Math.random() * 0.3,
+          color: ["#ef4444", "#22c55e", "#3b82f6", "#f59e0b", "#a855f7", "#ec4899"][Math.floor(Math.random() * 6)]
+        });
+      }
+
+      confettiRunning = true;
+      let frames = 0;
+
+      function animate() {
+        if (!confettiRunning) return;
+
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+        for (const p of confettiPieces) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+
+          if (p.y > confettiCanvas.height + 30) {
+            p.y = -20;
+            p.x = Math.random() * confettiCanvas.width;
+          }
+        }
+
+        frames++;
+        if (frames < 220) {
+          requestAnimationFrame(animate);
+        } else {
+          stopConfetti();
+        }
+      }
+
+      animate();
+    }
+
+    function stopConfetti() {
+      confettiRunning = false;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+
+    function showModal(win) {
+      if (win) {
+        modalEmoji.textContent = "🎉";
+        modalTitle.textContent = "You Win!";
+        modalText.textContent = "Nice job — you beat the computer.";
+        startConfetti();
+      } else {
+        modalEmoji.textContent = "😢";
+        modalTitle.textContent = "You Lost";
+        modalText.textContent = "The computer won this round. Try again.";
+        stopConfetti();
+      }
+      resultModal.classList.add("show");
+    }
+
+    function hideModal() {
+      resultModal.classList.remove("show");
+      stopConfetti();
+    }
+
+    function init() {
+      board = Array.from({ length: 8 }, () => Array(8).fill(null));
+
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 8; c++) {
+          if ((r + c) % 2 === 1) {
+            board[r][c] = { color: "b", king: false };
+          }
+        }
+      }
+
+      for (let r = 5; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if ((r + c) % 2 === 1) {
+            board[r][c] = { color: "r", king: false };
+          }
+        }
+      }
+
+      selected = null;
+      currentPlayer = "r";
+      gameOver = false;
+      thinking = false;
+      hideModal();
+      render();
+      setStatus("Your turn (Red)");
+    }
+
+    function render(hints = []) {
+      boardEl.innerHTML = "";
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const cell = document.createElement("div");
+          cell.className = `cell ${((r + c) % 2 === 0) ? "light" : "dark"}`;
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+
+          const hint = hints.find(h => h.to[0] === r && h.to[1] === c);
+          if (hint) {
+            cell.classList.add(hint.capture ? "captureHint" : "moveHint");
+          }
+
+          cell.addEventListener("click", () => onCellClick(r, c));
+
+          if (selected && selected[0] === r && selected[1] === c && board[r][c]) {
+            cell.appendChild(createPieceEl(board[r][c], true));
+          } else if (board[r][c]) {
+            cell.appendChild(createPieceEl(board[r][c], false));
+          }
+
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function createPieceEl(piece, isSelected) {
+      const el = document.createElement("div");
+      el.className = `piece ${piece.color === "r" ? "redPiece" : "blackPiece"} ${isSelected ? "selected" : ""}`;
+
+      if (piece.king) {
+        const mark = document.createElement("span");
+        mark.className = "kingMark";
+        mark.textContent = "♔";
+        el.appendChild(mark);
+      }
+
+      return el;
+    }
+
+    function inside(r, c) {
+      return r >= 0 && r < 8 && c >= 0 && c < 8;
+    }
+
+    function cloneBoard(b) {
+      return b.map(row => row.map(p => p ? { color: p.color, king: p.king } : null));
+    }
+
+    function getPieceDirs(piece) {
+      if (piece.king) return [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+      return dirs[piece.color];
+    }
+
+    function isForcedCaptureEnabled() {
+      const level = difficultyEl.value;
+      return level !== "hard";
+    }
+
+    function getMovesForPiece(b, r, c, forceCaptureOnly = false) {
+      const piece = b[r][c];
+      if (!piece) return [];
+
+      const moves = [];
+      const captures = [];
+
+      for (const [dr, dc] of getPieceDirs(piece)) {
+        const r1 = r + dr;
+        const c1 = c + dc;
+        const r2 = r + dr * 2;
+        const c2 = c + dc * 2;
+
+        if (inside(r1, c1) && !b[r1][c1] && !forceCaptureOnly) {
+          moves.push({
+            from: [r, c],
+            to: [r1, c1],
+            capture: null
+          });
+        }
+
+        if (
+          inside(r2, c2) &&
+          b[r1][c1] &&
+          b[r1][c1].color !== piece.color &&
+          !b[r2][c2]
+        ) {
+          captures.push({
+            from: [r, c],
+            to: [r2, c2],
+            capture: [r1, c1]
+          });
+        }
+      }
+
+      return forceCaptureOnly ? captures : [...captures, ...moves];
+    }
+
+    function getAllMoves(b, color, forcedCaptureMode = true) {
+      let all = [];
+      let captures = [];
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (b[r][c] && b[r][c].color === color) {
+            const pieceMoves = getMovesForPiece(b, r, c, false);
+            all.push(...pieceMoves);
+            captures.push(...pieceMoves.filter(m => m.capture));
+          }
+        }
+      }
+
+      return (forcedCaptureMode && captures.length) ? captures : all;
+    }
+
+    function applyMove(b, move) {
+      const newBoard = cloneBoard(b);
+      const piece = newBoard[move.from[0]][move.from[1]];
+
+      newBoard[move.from[0]][move.from[1]] = null;
+      newBoard[move.to[0]][move.to[1]] = piece;
+
+      if (move.capture) {
+        newBoard[move.capture[0]][move.capture[1]] = null;
+      }
+
+      if (piece.color === "r" && move.to[0] === 0) piece.king = true;
+      if (piece.color === "b" && move.to[0] === 7) piece.king = true;
+
+      let moreCaptures = [];
+      if (move.capture) {
+        moreCaptures = getMovesForPiece(newBoard, move.to[0], move.to[1], true);
+      }
+
+      return {
+        board: newBoard,
+        moreCaptures
+      };
+    }
+
+    function onCellClick(r, c) {
+      if (gameOver || thinking || currentPlayer !== "r") return;
+
+      const piece = board[r][c];
+      const forcedMode = isForcedCaptureEnabled();
+      const allPlayerMoves = getAllMoves(board, "r", forcedMode);
+      const playerHasCapture = allPlayerMoves.some(m => m.capture);
+
+      if (selected) {
+        const selectedMoves = forcedMode && playerHasCapture
+          ? getMovesForPiece(board, selected[0], selected[1], true)
+          : getMovesForPiece(board, selected[0], selected[1], false);
+
+        const chosenMove = selectedMoves.find(m => m.to[0] === r && m.to[1] === c);
+
+        if (chosenMove) {
+          const result = applyMove(board, chosenMove);
+          board = result.board;
+          selected = [chosenMove.to[0], chosenMove.to[1]];
+          render(result.moreCaptures);
+
+          if (chosenMove.capture && result.moreCaptures.length && forcedMode) {
+            setStatus("Continue capture");
+            return;
+          }
+
+          selected = null;
+
+          if (checkEnd()) return;
+
+          currentPlayer = "b";
+          render();
+          setStatus("Computer thinking...");
+          thinking = true;
+          setTimeout(computerTurn, 350);
+          return;
+        }
+      }
+
+      if (piece && piece.color === "r") {
+        const moves = (forcedMode && playerHasCapture)
+          ? getMovesForPiece(board, r, c, true)
+          : getMovesForPiece(board, r, c, false);
+
+        if (moves.length) {
+          selected = [r, c];
+          render(moves);
+        }
+      }
+    }
+
+    function computerTurn() {
+      if (gameOver) return;
+
+      const level = difficultyEl.value;
+      const forcedMode = level !== "hard";
+      const moves = getAllMoves(board, "b", forcedMode);
+
+      if (!moves.length) {
+        gameOver = true;
+        setStatus("You win!");
+        thinking = false;
+        showModal(true);
+        return;
+      }
+
+      let chosenMove;
+
+      if (level === "easy") {
+        chosenMove = easyMove(board, moves);
+      } else if (level === "medium") {
+        chosenMove = mediumMove(board, moves);
+      } else {
+        chosenMove = hardMove(board, moves);
+      }
+
+      let result = applyMove(board, chosenMove);
+      board = result.board;
+
+      while (chosenMove.capture && result.moreCaptures.length && forcedMode) {
+        chosenMove = level === "easy"
+          ? easyMove(board, result.moreCaptures)
+          : level === "medium"
+            ? mediumMove(board, result.moreCaptures)
+            : hardChainMove(board, result.moreCaptures);
+
+        result = applyMove(board, chosenMove);
+        board = result.board;
+      }
+
+      thinking = false;
+
+      if (checkEnd()) return;
+
+      currentPlayer = "r";
+      selected = null;
+      render();
+      setStatus("Your turn (Red)");
+    }
+
+    function easyMove(b, moves) {
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    function scoreMove(b, move) {
+      let score = 0;
+      const piece = b[move.from[0]][move.from[1]];
+
+      if (move.capture) score += 10;
+      if (move.to[0] === 7) score += 7;
+      if (piece.king) score += 2;
+
+      const centerBonus =
+        move.to[0] >= 2 && move.to[0] <= 5 &&
+        move.to[1] >= 2 && move.to[1] <= 5;
+
+      if (centerBonus) score += 1.2;
+      if (move.to[1] === 0 || move.to[1] === 7) score += 0.7;
+
+      return score + Math.random();
+    }
+
+    function mediumMove(b, moves) {
+      let best = moves[0];
+      let bestScore = -Infinity;
+
+      for (const move of moves) {
+        const score = scoreMove(b, move);
+        if (score > bestScore) {
+          bestScore = score;
+          best = move;
+        }
+      }
+
+      return best;
+    }
+
+    function hardChainMove(b, moves) {
+      let best = moves[0];
+      let bestValue = -Infinity;
+
+      for (const move of moves) {
+        const result = applyMove(b, move);
+        const value = evaluateBoard(result.board);
+        if (value > bestValue) {
+          bestValue = value;
+          best = move;
+        }
+      }
+
+      return best;
+    }
+
+    function evaluateBoard(b) {
+      let score = 0;
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const piece = b[r][c];
+          if (!piece) continue;
+
+          let value = piece.king ? 5.5 : 3.2;
+
+          if (piece.color === "b") {
+            value += r * 0.16;
+          } else {
+            value += (7 - r) * 0.16;
+          }
+
+          const center = r >= 2 && r <= 5 && c >= 2 && c <= 5;
+          if (center) value += 0.25;
+
+          if (piece.color === "b") score += value;
+          else score -= value;
+        }
+      }
+
+      score += getAllMoves(b, "b", false).length * 0.06;
+      score -= getAllMoves(b, "r", false).length * 0.06;
+
+      return score;
+    }
+
+    function minimax(b, depth, maximizing, alpha, beta) {
+      const blackMoves = getAllMoves(b, "b", false);
+      const redMoves = getAllMoves(b, "r", false);
+
+      if (depth === 0 || !blackMoves.length || !redMoves.length) {
+        return { score: evaluateBoard(b) };
+      }
+
+      if (maximizing) {
+        let best = { score: -Infinity, move: null };
+
+        for (const move of blackMoves) {
+          const result = applyMove(b, move);
+          const value = minimax(result.board, depth - 1, false, alpha, beta).score;
+
+          if (value > best.score) {
+            best = { score: value, move };
+          }
+
+          alpha = Math.max(alpha, value);
+          if (beta <= alpha) break;
+        }
+
+        return best;
+      } else {
+        let best = { score: Infinity, move: null };
+
+        for (const move of redMoves) {
+          const result = applyMove(b, move);
+          const value = minimax(result.board, depth - 1, true, alpha, beta).score;
+
+          if (value < best.score) {
+            best = { score: value, move };
+          }
+
+          beta = Math.min(beta, value);
+          if (beta <= alpha) break;
+        }
+
+        return best;
+      }
+    }
+
+    function hardMove(b, moves) {
+      const result = minimax(b, 4, true, -Infinity, Infinity);
+      return result.move || mediumMove(b, moves);
+    }
+
+    function countPieces(color) {
+      let count = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (board[r][c] && board[r][c].color === color) {
+            count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function checkEnd() {
+      const forcedMode = isForcedCaptureEnabled();
+
+      const redCount = countPieces("r");
+      const blackCount = countPieces("b");
+      const redMoves = getAllMoves(board, "r", forcedMode).length;
+      const blackMoves = getAllMoves(board, "b", forcedMode).length;
+
+      if (redCount === 0 || redMoves === 0) {
+        gameOver = true;
+        render();
+        setStatus("Computer wins!");
+        showModal(false);
+        return true;
+      }
+
+      if (blackCount === 0 || blackMoves === 0) {
+        gameOver = true;
+        render();
+        setStatus("You win!");
+        showModal(true);
+        return true;
+      }
+
+      return false;
+    }
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    restartBtn.addEventListener("click", init);
+    playAgainBtn.addEventListener("click", init);
+    resultModal.addEventListener("click", (e) => {
+      if (e.target === resultModal) hideModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>
